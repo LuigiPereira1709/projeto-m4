@@ -196,51 +196,79 @@ plt.suptitle('Top 5 States with the Highest Average Prices')
 plt.tight_layout()
 plt.show()
 
-# # 4. Qual o preço médio da gasolina e do etanol por estado?
-# df_data = df.groupby(['Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+# 4. Qual o preço médio da gasolina e do etanol por estado?
 
-# fig, axes = plt.subplots(1,2, figsize=(10,6))
+# Group by state and product, calculate mean price
+df_data = df.groupby(['Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
 
-# sns.scatterplot(y='Estado - Sigla', x='Valor de Venda', data=df_data[df_data['Produto']==product[0]], ax=axes[0])
-# axes[0].set_title('Gasolina')
-# axes[0].set_xlabel('Preco medio')
-# axes[0].set_ylabel('Estados')
+# Create a subplot with two scatter plots side by side
+fig, axes = plt.subplots(1,2, figsize=(10,6))
 
-# sns.scatterplot(y='Estado - Sigla', x='Valor de Venda', data=df_data[df_data['Produto']==product[2]], color='orange', ax=axes[1])
-# axes[1].set_title('Etanol')
-# axes[1].set_xlabel('Preco medio')
-# axes[1].set_ylabel('=='*20)
-# axes[1].set_yticks([])
+# Plot a scatter plot for the average prices of Gasolina (Gasoline) in each state
+sns.scatterplot(y='Estado - Sigla', x='Valor de Venda', data=df_data[df_data['Produto']==product[0]], ax=axes[0])
+axes[0].set_title('Gasolina')
+axes[0].set_xlabel('Average Price')
+axes[0].set_ylabel('States')
 
-# plt.suptitle('Preco Medio por Estado')
-# plt.tight_layout()
-# plt.show()
+# Plot a scatter plot for the average prices of Etanol (Ethanol) in each state
+sns.scatterplot(y='Estado - Sigla', x='Valor de Venda', data=df_data[df_data['Produto']==product[2]], color='orange', ax=axes[1])
+axes[1].set_title('Etanol')
+axes[1].set_xlabel('Average Price')
+axes[1].set_ylabel('')  # Clearing the default y-axis label
+axes[1].set_yticks([])  # Removing y-axis ticks
 
+# Set the overall title for the entire plot
+plt.suptitle('Average Price per State')
+plt.tight_layout()
+plt.show()
 
-# # 5. Qual o município que possui o menor preço para a gasolina e para o etanol?
-# print('Gasolina Novembro\n', df_nov[df_nov['Produto']==product[0]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
-# print('Gasolina Novembro\n', df_nov[df_nov['Produto']==product[0]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
-# print('Etanol Novembro\n', df_nov[df_nov['Produto']==product[2]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
-# print('Etanol Dezembro\n', df_dez[df_dez['Produto']==product[2]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0])
+# 5. Qual o município que possui o menor preço para a gasolina e para o etanol?
 
-# # 6. Qual o município que possui o maior preço para a gasolina e para o etanol?
-# print('Gasolina Novembro\n', df_nov[df_nov['Produto']==product[0]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
-# print('Gasolina Dezembro\n', df_dez[df_dez['Produto']==product[0]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
-# print('Etanol Novembro\n', df_nov[df_nov['Produto']==product[2]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
-# print('Etanol Dezembro\n', df_dez[df_dez['Produto']==product[2]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0])
+# Print the information for the municipality with the lowest Gasolina (Gasoline) price in November
+print('Gasolina November\n', df_nov[df_nov['Produto']==product[0]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
 
-# # 7. Qual a região que possui o maior valor médio da gasolina?
-# data_regiao = df_nov.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-# print('Gasolina Novembro\n', data_regiao[data_regiao['Produto']==product[0]].nlargest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0], '\n')
-# data_regiao = df_dez.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-# print('Gasolina Dezembro\n', data_regiao[data_regiao['Produto']==product[0]].nlargest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0])
+# Print the information for the municipality with the lowest Gasolina (Gasoline) price in December
+print('Gasolina December\n', df_dez[df_dez['Produto']==product[0]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
 
-# # 8. Qual a região que possui o menor valor médio do etanol?
-# data_regiao = df_nov.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-# print('Etanol Novembro\n', data_regiao[data_regiao['Produto']==product[2]].nsmallest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0], '\n')
-# data_regiao = df_dez.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-# print('Etanol Dezembro\n', data_regiao[data_regiao['Produto']==product[2]].nsmallest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0])
+# Print the information for the municipality with the lowest Etanol (Ethanol) price in November
+print('Etanol November\n', df_nov[df_nov['Produto']==product[2]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
 
+# Print the information for the municipality with the lowest Etanol (Ethanol) price in December
+print('Etanol December\n', df_dez[df_dez['Produto']==product[2]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0])
+
+# 6. Qual o município que possui o maior preço para a gasolina e para o etanol?
+
+# Print the information for the municipality with the highest Gasolina (Gasoline) price in November
+print('Gasolina November\n', df_nov[df_nov['Produto']==product[0]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+
+# Print the information for the municipality with the highest Gasolina (Gasoline) price in December
+print('Gasolina December\n', df_dez[df_dez['Produto']==product[0]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+
+# Print the information for the municipality with the highest Etanol (Ethanol) price in November
+print('Etanol November\n', df_nov[df_nov['Produto']==product[2]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+
+# Print the information for the municipality with the highest Etanol (Ethanol) price in December
+print('Etanol December\n', df_dez[df_dez['Produto']==product[2]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0])
+
+# 7. Qual a região que possui o maior valor médio da gasolina?
+
+# Group by region and product, calculate mean price for Gasolina (Gasoline) in November
+data_regiao = df_nov.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+print('Gasolina November\n', data_regiao[data_regiao['Produto']==product[0]].nlargest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0], '\n')
+
+# Group by region and product, calculate mean price for Gasolina (Gasoline) in December
+data_regiao = df_dez.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+print('Gasolina December\n', data_regiao[data_regiao['Produto']==product[0]].nlargest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0])
+
+# 8. Qual a região que possui o menor valor médio do etanol?
+
+# Group by region and product, calculate mean price for Etanol (Ethanol) in November
+data_regiao = df_nov.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+print('Etanol November\n', data_regiao[data_regiao['Produto']==product[2]].nsmallest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0], '\n')
+
+# Group by region and product, calculate mean price for Etanol (Ethanol) in December
+data_regiao = df_dez.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+print('Etanol December\n', data_regiao[data_regiao['Produto']==product[2]].nsmallest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0])
 
 # # 9. Há alguma correlação entre o valor do combustível (gasolina e etanol) e a região onde ele é vendido?
 
