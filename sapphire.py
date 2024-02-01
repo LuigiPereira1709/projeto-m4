@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from dtype_diet import report_on_dataframe, optimize_dtypes
+import plotly.express as px
 
 # Read data for November
 df_nov = pd.read_csv('./data/precos-gasolina-etanol-11.csv', delimiter=';')
@@ -52,96 +53,96 @@ product = ['GASOLINA', 'GASOLINA ADITIVADA', 'ETANOL']
 # 1. Como se comportaram o preço dos combustíveis durante os dois meses citados? Os valores do 
 # etanol e da gasolina tiveram uma tendência de queda ou diminuição?
 
-# Group by product and day of collection, calculating the mean price for November
-df_nov1 = df_nov.groupby(['Produto','Dia da Coleta'])['Valor de Venda'].mean().reset_index()
+# # Group by product and day of collection, calculating the mean price for November
+# df_nov1 = df_nov.groupby(['Produto','Dia da Coleta'])['Valor de Venda'].mean().reset_index()
 
-# Group by product and day of collection, calculating the mean price for December
-df_dez1 = df_dez.groupby(['Produto', 'Dia da Coleta'])['Valor de Venda'].mean().reset_index()
+# # Group by product and day of collection, calculating the mean price for December
+# df_dez1 = df_dez.groupby(['Produto', 'Dia da Coleta'])['Valor de Venda'].mean().reset_index()
 
-# Merge the November and December dataframes on the day of collection
-data = pd.merge(df_dez1, df_nov1, on='Produto', how='inner')
+# # Merge the November and December dataframes on the day of collection
+# data = pd.merge(df_dez1, df_nov1, on='Produto', how='inner')
 
-# Concatenate two dataframes df_nov1 and df_dez1 into data_mimmax
-data_mimmax = pd.concat([df_nov1, df_dez1])
+# # Concatenate two dataframes df_nov1 and df_dez1 into data_mimmax
+# data_mimmax = pd.concat([df_nov1, df_dez1])
 
-# Convert the 'Valor de Venda' column to float type
-data_mimmax['Valor de Venda'].astype('float')
+# # Convert the 'Valor de Venda' column to float type
+# data_mimmax['Valor de Venda'].astype('float')
 
-# Filter data for each product type (stored in the 'product' list)
-data_mimmax_gasc = data_mimmax[data_mimmax['Produto']==product[0]]
-data_mimmax_gasa = data_mimmax[data_mimmax['Produto']==product[1]]
-data_mimmax_etn = data_mimmax[data_mimmax['Produto']==product[2]]
+# # Filter data for each product type (stored in the 'product' list)
+# data_mimmax_gasc = data_mimmax[data_mimmax['Produto']==product[0]]
+# data_mimmax_gasa = data_mimmax[data_mimmax['Produto']==product[1]]
+# data_mimmax_etn = data_mimmax[data_mimmax['Produto']==product[2]]
 
-# Calculate the mean prices for each day of collection in November
-data_all_nov = df_nov.groupby(['Dia da Coleta'])['Valor de Venda'].mean().reset_index()
+# # Calculate the mean prices for each day of collection in November
+# data_all_nov = df_nov.groupby(['Dia da Coleta'])['Valor de Venda'].mean().reset_index()
 
-# Calculate the mean prices for each day of collection in December
-data_all_dez = df_dez.groupby(['Dia da Coleta'])['Valor de Venda'].mean().reset_index()
+# # Calculate the mean prices for each day of collection in December
+# data_all_dez = df_dez.groupby(['Dia da Coleta'])['Valor de Venda'].mean().reset_index()
 
-# Merge the mean prices for November and December on the day of collection
-data_all = pd.merge(data_all_nov, data_all_dez, on='Dia da Coleta', how='inner')
+# # Merge the mean prices for November and December on the day of collection
+# data_all = pd.merge(data_all_nov, data_all_dez, on='Dia da Coleta', how='inner')
 
-# Concatenate mean prices for November and December into data_all_minmax
-data_all_minmax = pd.concat([data_all_dez, data_all_nov])
+# # Concatenate mean prices for November and December into data_all_minmax
+# data_all_minmax = pd.concat([data_all_dez, data_all_nov])
 
-# Convert the 'Valor de Venda' column to float type for data_all_minmax
-data_all_minmax['Valor de Venda'].astype('float')
+# # Convert the 'Valor de Venda' column to float type for data_all_minmax
+# data_all_minmax['Valor de Venda'].astype('float')
 
-# Create a 2x2 subplot grid
-fig, axes = plt.subplots(2,2, figsize=(10,6))
+# # Create a 2x2 subplot grid
+# fig, axes = plt.subplots(2,2, figsize=(10,6))
 
-# Plot line chart for overall mean prices of all fuels in November and December
-sns.lineplot(x=data_all['Dia da Coleta'], y=data_all_minmax['Valor de Venda'].min(), color='red', linestyle='dashdot', ax=axes[0,0])
-sns.lineplot(x=data_all['Dia da Coleta'], y=data_all_minmax['Valor de Venda'].max(), color='lightgreen', linestyle='dashdot', ax=axes[0,0])
-sns.lineplot(x='Dia da Coleta', y='Valor de Venda_x', data=data_all, label='November', color='blue', ax=axes[0,0])
-sns.lineplot(x='Dia da Coleta', y='Valor de Venda_y', data=data_all, label='December', color='orange', ax=axes[0,0])
-sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_all_minmax.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[0,0])
-sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_all_minmax.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[0,0])
-axes[0,0].set_title('All Fuels')
-axes[0,0].set_xlabel('Days')
-axes[0,0].set_ylabel('Average Price')
-axes[0,0].legend(loc='lower left')
+# # Plot line chart for overall mean prices of all fuels in November and December
+# sns.lineplot(x=data_all['Dia da Coleta'], y=data_all_minmax['Valor de Venda'].min(), color='red', linestyle='dashdot', ax=axes[0,0])
+# sns.lineplot(x=data_all['Dia da Coleta'], y=data_all_minmax['Valor de Venda'].max(), color='lightgreen', linestyle='dashdot', ax=axes[0,0])
+# sns.lineplot(x='Dia da Coleta', y='Valor de Venda_x', data=data_all, label='November', color='blue', ax=axes[0,0])
+# sns.lineplot(x='Dia da Coleta', y='Valor de Venda_y', data=data_all, label='December', color='orange', ax=axes[0,0])
+# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_all_minmax.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[0,0])
+# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_all_minmax.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[0,0])
+# axes[0,0].set_title('All Fuels')
+# axes[0,0].set_xlabel('Days')
+# axes[0,0].set_ylabel('Average Price')
+# axes[0,0].legend(loc='lower left')
 
-# Plot line chart for Gasolina Comum (Regular Gasoline) prices in November and December
-sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasc['Valor de Venda'].max(), data=data[data['Produto'] == product[0]], color='lightgreen', linestyle='dashdot', ax=axes[0,1])
-sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasc['Valor de Venda'].min(), data=data[data['Produto'] == product[0]], color='red', linestyle='dashdot', ax=axes[0,1])
-sns.lineplot(x='Dia da Coleta_y', y='Valor de Venda_y', data=data[data['Produto'] == product[0]], label='November', color='blue', ax=axes[0,1])
-sns.lineplot(x='Dia da Coleta_x', y='Valor de Venda_x', data=data[data['Produto'] == product[0]], label='December', color='orange', ax=axes[0,1])
-sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_gasc.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[0,1])
-sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_gasc.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[0,1])
-axes[0,1].set_title('Regular Gasoline')
-axes[0,1].set_xlabel('Days')
-axes[0,1].set_ylabel('Average Price')
-axes[0,1].legend(loc='upper left')
+# # Plot line chart for Gasolina Comum (Regular Gasoline) prices in November and December
+# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasc['Valor de Venda'].max(), data=data[data['Produto'] == product[0]], color='lightgreen', linestyle='dashdot', ax=axes[0,1])
+# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasc['Valor de Venda'].min(), data=data[data['Produto'] == product[0]], color='red', linestyle='dashdot', ax=axes[0,1])
+# sns.lineplot(x='Dia da Coleta_y', y='Valor de Venda_y', data=data[data['Produto'] == product[0]], label='November', color='blue', ax=axes[0,1])
+# sns.lineplot(x='Dia da Coleta_x', y='Valor de Venda_x', data=data[data['Produto'] == product[0]], label='December', color='orange', ax=axes[0,1])
+# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_gasc.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[0,1])
+# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_gasc.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[0,1])
+# axes[0,1].set_title('Regular Gasoline')
+# axes[0,1].set_xlabel('Days')
+# axes[0,1].set_ylabel('Average Price')
+# axes[0,1].legend(loc='upper left')
 
-# Plot line chart for Gasolina Aditivada (Premium Gasoline) prices in November and December
-sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasa['Valor de Venda'].min(), data=data[data['Produto'] == product[1]], color='red', linestyle='dashdot', ax=axes[1,0])
-sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasa['Valor de Venda'].max(), data=data[data['Produto'] == product[1]], color='lightgreen', linestyle='dashdot', ax=axes[1,0])
-sns.lineplot(x='Dia da Coleta_y', y='Valor de Venda_y', data=data[data['Produto'] == product[1]], label='November', color='blue', ax=axes[1,0])
-sns.lineplot(x='Dia da Coleta_x', y='Valor de Venda_x', data=data[data['Produto'] == product[1]], label='December', color='orange', ax=axes[1,0])
-sns.lineplot(x='Dia da Coleta', y= 'Valor de Venda', data=data_mimmax_gasa.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[1,0])
-sns.lineplot(x='Dia da Coleta', y= 'Valor de Venda', data=data_mimmax_gasa.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[1,0])
-axes[1,0].set_title('Premium Gasoline')
-axes[1,0].set_xlabel('Days')
-axes[1,0].set_ylabel('Average Price')
-axes[1,0].legend(loc='lower left')
+# # Plot line chart for Gasolina Aditivada (Premium Gasoline) prices in November and December
+# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasa['Valor de Venda'].min(), data=data[data['Produto'] == product[1]], color='red', linestyle='dashdot', ax=axes[1,0])
+# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasa['Valor de Venda'].max(), data=data[data['Produto'] == product[1]], color='lightgreen', linestyle='dashdot', ax=axes[1,0])
+# sns.lineplot(x='Dia da Coleta_y', y='Valor de Venda_y', data=data[data['Produto'] == product[1]], label='November', color='blue', ax=axes[1,0])
+# sns.lineplot(x='Dia da Coleta_x', y='Valor de Venda_x', data=data[data['Produto'] == product[1]], label='December', color='orange', ax=axes[1,0])
+# sns.lineplot(x='Dia da Coleta', y= 'Valor de Venda', data=data_mimmax_gasa.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[1,0])
+# sns.lineplot(x='Dia da Coleta', y= 'Valor de Venda', data=data_mimmax_gasa.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[1,0])
+# axes[1,0].set_title('Premium Gasoline')
+# axes[1,0].set_xlabel('Days')
+# axes[1,0].set_ylabel('Average Price')
+# axes[1,0].legend(loc='lower left')
 
-# Plot line chart for Etanol (Ethanol) prices in November and December
-sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_etn['Valor de Venda'].max(), data=data[data['Produto'] == product[0]], color='lightgreen', linestyle='dashdot', ax=axes[1,1])
-sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_etn['Valor de Venda'].min(), data=data[data['Produto'] == product[0]], color='red', linestyle='dashdot', ax=axes[1,1])
-sns.lineplot(x='Dia da Coleta_y', y='Valor de Venda_y', data=data[data['Produto'] == product[2]], label='November', color='blue', ax=axes[1,1])
-sns.lineplot(x='Dia da Coleta_x', y='Valor de Venda_x', data=data[data['Produto'] == product[2]], label='December', color='orange', ax=axes[1,1])
-sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_etn.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[1,1])
-sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_etn.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[1,1])
-axes[1,1].set_title('Ethanol')
-axes[1,1].set_xlabel('Days')
-axes[1,1].set_ylabel('Average Price')
-axes[1,1].legend()
+# # Plot line chart for Etanol (Ethanol) prices in November and December
+# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_etn['Valor de Venda'].max(), data=data[data['Produto'] == product[0]], color='lightgreen', linestyle='dashdot', ax=axes[1,1])
+# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_etn['Valor de Venda'].min(), data=data[data['Produto'] == product[0]], color='red', linestyle='dashdot', ax=axes[1,1])
+# sns.lineplot(x='Dia da Coleta_y', y='Valor de Venda_y', data=data[data['Produto'] == product[2]], label='November', color='blue', ax=axes[1,1])
+# sns.lineplot(x='Dia da Coleta_x', y='Valor de Venda_x', data=data[data['Produto'] == product[2]], label='December', color='orange', ax=axes[1,1])
+# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_etn.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[1,1])
+# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_etn.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[1,1])
+# axes[1,1].set_title('Ethanol')
+# axes[1,1].set_xlabel('Days')
+# axes[1,1].set_ylabel('Average Price')
+# axes[1,1].legend()
 
-# Set the overall title for the entire plot
-fig.suptitle('Average Price Comparison Between November and December')
-plt.tight_layout()
-plt.show()
+# # Set the overall title for the entire plot
+# fig.suptitle('Average Price Comparison Between November and December')
+# plt.tight_layout()
+# plt.show()
 
 # # 2. Qual o preço médio da gasolina e do etanol nesses dois meses?
 
@@ -174,14 +175,21 @@ plt.show()
 # fig, axes = plt.subplots(1,2, figsize=(10, 6))
 
 # # Plot a bar chart showing mean values for each product in November and December
-# sns.barplot(x='Product', y='Mean_Value', hue="Month", data=data, color='purple', ax=axes[0])
+# ax = sns.barplot(x='Product', y='Mean_Value', hue="Month", data=data, palette={'November':'blue', 'December':'orange'}, ax=axes[0])
+# for p in ax.patches:
+#     ax.annotate(format(p.get_height(), '.2f'), 
+#                 (p.get_x() + p.get_width() / 2., p.get_height()), 
+#                 ha='center', va='center', 
+#                 xytext=(0, 10), 
+#                 textcoords='offset points')
 # axes[0].set_title("Mean of Products Between November and December")
 # axes[0].set_ylabel("Mean_Value")
 # axes[0].set_xlabel("Products")
 # axes[0].legend()
 
 # # Plot a pie chart showing the distribution of fuel types based on counts in November and December
-# axes[1].pie(data_merged[['Qtd_x', 'Qtd_y']].sum(axis=1), colors=sns.color_palette('bright'), autopct="%.0f%%")
+# custom_palette = {'GASOLINA': 'blue', 'GASOLINA ADITIVADA':'orange', 'ETANOL':'green'}
+# axes[1].pie(data_merged[['Qtd_x', 'Qtd_y']].sum(axis=1), colors=[custom_palette[c] for c in data_merged['Product']], autopct="%.0f%%")
 # axes[1].set_title('Distribution of fuel types')
 # axes[1].legend(labels=data_merged['Product'], loc='lower center')
 
@@ -189,21 +197,29 @@ plt.show()
 # plt.tight_layout()
 # plt.show()
 
-# # 3. Quais os 5 estados com o preço médio da gasolina e do etanol mais caros?
+# 3. Quais os 5 estados com o preço médio da gasolina e do etanol mais caros?
 
-# # Concatenate dataframes for November and December
-# df = pd.concat([df_nov, df_dez], axis=0, ignore_index=True)
+# Concatenate dataframes for November and December
+df = pd.concat([df_nov, df_dez], axis=0, ignore_index=True)
 
-# # Ensure 'Estado - Sigla' column is treated as a string
-# df['Estado - Sigla'] = df['Estado - Sigla'].astype(str) 
+# Ensure 'Estado - Sigla' column is treated as a string
+df['Estado - Sigla'] = df['Estado - Sigla'].astype(str) 
 
-# # Group by state and product, calculate mean price, and sort values in descending order
-# df_per_product = df.groupby(['Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-# df_per_product = df_per_product.sort_values('Valor de Venda', ascending=False)
+# Group by state and product, calculate mean price, and sort values in descending order
+df_per_product = df.groupby(['Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+df_per_product = df_per_product.sort_values('Valor de Venda', ascending=False)
 
-# # Group by state, calculate mean price, and select the top 5 states with the highest average prices
-# df_all = df.groupby('Estado - Sigla')['Valor de Venda'].mean().reset_index()
-# df_all = df_all.sort_values('Valor de Venda', ascending=False).head(5).reset_index(drop=True)
+# Group by state, calculate mean price, and select the top 5 states with the highest average prices
+df_all = df.groupby('Estado - Sigla')['Valor de Venda'].mean().reset_index()
+df_all = df_all.sort_values('Valor de Venda', ascending=False).head(5).reset_index(drop=True)
+
+fig = px.treemap(df_all, labels=df_all['Estado - Sigla'], values=df_all['Valor de Venda'])
+
+fig.show()
+from time import sleep 
+
+sleep(10)
+
 
 # # Create a subplot with three plots side by side
 # fig, axes = plt.subplots(1,3, figsize=(10,6))
