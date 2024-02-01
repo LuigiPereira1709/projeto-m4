@@ -2,6 +2,7 @@
 import pandas as pd 
 import matplotlib.pyplot as plt
 import seaborn as sns
+import squarify
 from dtype_diet import report_on_dataframe, optimize_dtypes
 import plotly.express as px
 
@@ -50,8 +51,8 @@ def operation_df(df, column1, operation, product=None, column2=None):
 # List of products for which aggregation will be performed
 product = ['GASOLINA', 'GASOLINA ADITIVADA', 'ETANOL']
 
-# 1. Como se comportaram o preço dos combustíveis durante os dois meses citados? Os valores do 
-# etanol e da gasolina tiveram uma tendência de queda ou diminuição?
+# # 1. Como se comportaram o preço dos combustíveis durante os dois meses citados? Os valores do 
+# # etanol e da gasolina tiveram uma tendência de queda ou diminuição?
 
 # # Group by product and day of collection, calculating the mean price for November
 # df_nov1 = df_nov.groupby(['Produto','Dia da Coleta'])['Valor de Venda'].mean().reset_index()
@@ -174,7 +175,10 @@ product = ['GASOLINA', 'GASOLINA ADITIVADA', 'ETANOL']
 # # Create a subplot with two plots side by side
 # fig, axes = plt.subplots(1,2, figsize=(10, 6))
 
+# custom_palette = {'November':'blue', 'December':'orange'}
+
 # # Plot a bar chart showing mean values for each product in November and December
+<<<<<<< HEAD
 # ax = sns.barplot(x='Product', y='Mean_Value', hue="Month", data=data, palette={'November':'blue', 'December':'orange'}, ax=axes[0])
 # for p in ax.patches:
 #     ax.annotate(format(p.get_height(), '.2f'), 
@@ -182,14 +186,21 @@ product = ['GASOLINA', 'GASOLINA ADITIVADA', 'ETANOL']
 #                 ha='center', va='center', 
 #                 xytext=(0, 10), 
 #                 textcoords='offset points')
+=======
+# sns.barplot(x='Product', y='Mean_Value', hue="Month", data=data, palette=[custom_palette[color] for color in custom_palette], ax=axes[0])
+>>>>>>> 7057213b77c006fc8a25210b8978df5ffcf809ee
 # axes[0].set_title("Mean of Products Between November and December")
 # axes[0].set_ylabel("Mean_Value")
 # axes[0].set_xlabel("Products")
 # axes[0].legend()
 
 # # Plot a pie chart showing the distribution of fuel types based on counts in November and December
+<<<<<<< HEAD
 # custom_palette = {'GASOLINA': 'blue', 'GASOLINA ADITIVADA':'orange', 'ETANOL':'green'}
 # axes[1].pie(data_merged[['Qtd_x', 'Qtd_y']].sum(axis=1), colors=[custom_palette[c] for c in data_merged['Product']], autopct="%.0f%%")
+=======
+# axes[1].pie(data_merged[['Qtd_x', 'Qtd_y']].sum(axis=1), colors=['purple', 'lightblue', 'lightgreen'], autopct="%.0f%%")
+>>>>>>> 7057213b77c006fc8a25210b8978df5ffcf809ee
 # axes[1].set_title('Distribution of fuel types')
 # axes[1].legend(labels=data_merged['Product'], loc='lower center')
 
@@ -213,13 +224,9 @@ df_per_product = df_per_product.sort_values('Valor de Venda', ascending=False)
 df_all = df.groupby('Estado - Sigla')['Valor de Venda'].mean().reset_index()
 df_all = df_all.sort_values('Valor de Venda', ascending=False).head(5).reset_index(drop=True)
 
-fig = px.treemap(df_all, labels=df_all['Estado - Sigla'], values=df_all['Valor de Venda'])
+fig = px.treemap(df_all, path=[px.Constant('All'), 'Estado - Sigla'], values='Valor de Venda')
 
 fig.show()
-from time import sleep 
-
-sleep(10)
-
 
 # # Create a subplot with three plots side by side
 # fig, axes = plt.subplots(1,3, figsize=(10,6))
