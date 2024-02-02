@@ -2,7 +2,6 @@
 import pandas as pd 
 import matplotlib.pyplot as plt
 import seaborn as sns
-import squarify
 from dtype_diet import report_on_dataframe, optimize_dtypes
 import plotly.express as px
 
@@ -178,7 +177,6 @@ product = ['GASOLINA', 'GASOLINA ADITIVADA', 'ETANOL']
 # custom_palette = {'November':'blue', 'December':'orange'}
 
 # # Plot a bar chart showing mean values for each product in November and December
-<<<<<<< HEAD
 # ax = sns.barplot(x='Product', y='Mean_Value', hue="Month", data=data, palette={'November':'blue', 'December':'orange'}, ax=axes[0])
 # for p in ax.patches:
 #     ax.annotate(format(p.get_height(), '.2f'), 
@@ -186,21 +184,16 @@ product = ['GASOLINA', 'GASOLINA ADITIVADA', 'ETANOL']
 #                 ha='center', va='center', 
 #                 xytext=(0, 10), 
 #                 textcoords='offset points')
-=======
 # sns.barplot(x='Product', y='Mean_Value', hue="Month", data=data, palette=[custom_palette[color] for color in custom_palette], ax=axes[0])
->>>>>>> 7057213b77c006fc8a25210b8978df5ffcf809ee
 # axes[0].set_title("Mean of Products Between November and December")
 # axes[0].set_ylabel("Mean_Value")
 # axes[0].set_xlabel("Products")
 # axes[0].legend()
 
 # # Plot a pie chart showing the distribution of fuel types based on counts in November and December
-<<<<<<< HEAD
 # custom_palette = {'GASOLINA': 'blue', 'GASOLINA ADITIVADA':'orange', 'ETANOL':'green'}
 # axes[1].pie(data_merged[['Qtd_x', 'Qtd_y']].sum(axis=1), colors=[custom_palette[c] for c in data_merged['Product']], autopct="%.0f%%")
-=======
 # axes[1].pie(data_merged[['Qtd_x', 'Qtd_y']].sum(axis=1), colors=['purple', 'lightblue', 'lightgreen'], autopct="%.0f%%")
->>>>>>> 7057213b77c006fc8a25210b8978df5ffcf809ee
 # axes[1].set_title('Distribution of fuel types')
 # axes[1].legend(labels=data_merged['Product'], loc='lower center')
 
@@ -217,42 +210,50 @@ df = pd.concat([df_nov, df_dez], axis=0, ignore_index=True)
 df['Estado - Sigla'] = df['Estado - Sigla'].astype(str) 
 
 # Group by state and product, calculate mean price, and sort values in descending order
-df_per_product = df.groupby(['Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-df_per_product = df_per_product.sort_values('Valor de Venda', ascending=False)
+df_gas = df[df['Produto']==product[0]]
+df_gas = df_gas.groupby(['Municipio', 'Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+df_gas = df_gas.groupby('Estado - Sigla').apply(lambda x: x.nlargest(5, 'Valor de Venda')).reset_index(drop=True)
+df_gas_filter = df_gas.groupby('Estado - Sigla')['Valor de Venda'].mean().nlargest(5).reset_index()
+df_gas = df_gas[df_gas['Estado - Sigla'].isin(df_gas_filter['Estado - Sigla'].tolist())]
 
-# Group by state, calculate mean price, and select the top 5 states with the highest average prices
-df_all = df.groupby('Estado - Sigla')['Valor de Venda'].mean().reset_index()
-df_all = df_all.sort_values('Valor de Venda', ascending=False).head(5).reset_index(drop=True)
+df_eta = df[df['Produto']==product[2]]
+df_eta = df_eta.groupby(['Municipio', 'Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+df_eta = df_eta.groupby('Estado - Sigla').apply(lambda x: x.nlargest(5, 'Valor de Venda')).reset_index(drop=True)
+df_eta_filter = df_eta.groupby('Estado - Sigla')['Valor de Venda'].mean().nlargest(5).reset_index()
+df_eta = df_eta[df_eta['Estado - Sigla'].isin(df_eta_filter['Estado - Sigla'].tolist())]
 
-fig = px.treemap(df_all, path=[px.Constant('All'), 'Estado - Sigla'], values='Valor de Venda')
+#Criar treemap
+figs = [
+    px.treemap(df_gas,
+    path=[px.Constant('Estados'), 'Estado - Sigla', 'Municipio'], 
+    values='Valor de Venda', 
+    custom_data=['Valor de Venda', 'Municipio'],
+    title='Top 5 Cities with Highest Average Prices in the Top 5 States',
+    labels={'Valor de Venda': 'Average Price'},
+    color='Valor de Venda',
+    ),
 
-fig.show()
+    px.treemap(df_eta,
+    path=[px.Constant('Estados'), 'Estado - Sigla', 'Municipio'], 
+    values='Valor de Venda', 
+    custom_data=['Valor de Venda', 'Municipio'],
+    title='Top 5 Cities with Highest Average Prices in the Top 5 States',
+    labels={'Valor de Venda': 'Average Price'},
+)
+]
 
-# # Create a subplot with three plots side by side
-# fig, axes = plt.subplots(1,3, figsize=(10,6))
+from plotly.subplots import make_subplots
 
-# # Plot bar chart for the top 5 states with the highest average prices for all fuels
-# sns.barplot(x='Estado - Sigla', y='Valor de Venda', data=df_all, palette='bright', ax=axes[1])
-# axes[1].set_title('All Fuels')
-# axes[1].set_xlabel('States')
-# axes[1].set_ylabel('Average Price')
+fig = make_subplots(rows=1, cols=len(figs), specs=[[{"type":'treemap'}, {'type':'treemap'}]])
+for i, figure in enumerate(figs):
+    for trace in range(len(figure["data"])):
+        fig.append_trace(figure['data'][trace], row=1, col=i+1)
 
-# # Plot bar chart for the top 5 states with the highest average prices for Gasolina (Gasoline)
-# sns.barplot(x='Estado - Sigla', y='Valor de Venda', data=df_per_product[df_per_product['Produto']==product[0]].head(5), palette='bright', ax=axes[0])
-# axes[0].set_title('Gasolina')
-# axes[0].set_xlabel('States')
-# axes[0].set_ylabel('Average Price')
+fig.update_traces(textinfo='label+value',
+                    texttemplate='%{label}: %{value:,.2f}')
+fig.update_traces(hovertemplate='Valor de Venda: %{customdata[0]:,.2f}')
 
-# # Plot bar chart for the top 5 states with the highest average prices for Etanol (Ethanol)
-# sns.barplot(x='Estado - Sigla', y='Valor de Venda', data=df_per_product[df_per_product['Produto']==product[2]].head(5), palette='bright', ax=axes[2])
-# axes[2].set_title('Ethanol')
-# axes[2].set_xlabel('States')
-# axes[2].set_ylabel('Average Price')
-
-# # Set the overall title for the entire plot
-# plt.suptitle('Top 5 States with the Highest Average Prices')
-# plt.tight_layout()
-# plt.show()
+fig.write_html('first_figure.html', auto_open=True)
 
 # # 4. Qual o preço médio da gasolina e do etanol por estado?
 
