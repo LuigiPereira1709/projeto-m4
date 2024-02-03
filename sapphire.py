@@ -206,39 +206,42 @@ product = ['GASOLINA', 'GASOLINA ADITIVADA', 'ETANOL']
 
 # Concatenate dataframes for November and December
 df = pd.concat([df_nov, df_dez], axis=0, ignore_index=True)
+df = df.drop(df[df['Produto']=='GASOLINA ADITIVADA'].index)
 
 # Ensure 'Estado - Sigla' column is treated as a string
 df['Estado - Sigla'] = df['Estado - Sigla'].astype(str) 
 
 # Group by state and product, calculate mean price, and sort values in descending order
 df_gas = df[df['Produto']==product[0]]
-df_gas = df_gas.groupby(['Municipio', 'Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+df_gas = df_gas.groupby(['Municipio', 'Estado - Sigla'])['Valor de Venda'].mean().reset_index()
 df_gas = df_gas.groupby('Estado - Sigla').apply(lambda x: x.nlargest(5, 'Valor de Venda')).reset_index(drop=True)
 df_gas_filter = df_gas.groupby('Estado - Sigla')['Valor de Venda'].mean().nlargest(5).reset_index()
 df_gas = df_gas[df_gas['Estado - Sigla'].isin(df_gas_filter['Estado - Sigla'].tolist())]
 
 df_eta = df[df['Produto']==product[2]]
-df_eta = df_eta.groupby(['Municipio', 'Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+df_eta = df_eta.groupby(['Municipio', 'Estado - Sigla'])['Valor de Venda'].mean().reset_index()
 df_eta = df_eta.groupby('Estado - Sigla').apply(lambda x: x.nlargest(5, 'Valor de Venda')).reset_index(drop=True)
 df_eta_filter = df_eta.groupby('Estado - Sigla')['Valor de Venda'].mean().nlargest(5).reset_index()
 df_eta = df_eta[df_eta['Estado - Sigla'].isin(df_eta_filter['Estado - Sigla'].tolist())]
 
-#Criar treemap
+df_concat = pd.concat([df_gas, df_eta], axis=0, ignore_index=True)
+
+# Criar treemap
 figs = [
     px.treemap(df_gas,
-    path=[px.Constant('Estados'), 'Estado - Sigla', 'Municipio'], 
-    values='Valor de Venda',
-    custom_data=['Valor de Venda', 'Municipio'],
-    title='Top 5 Cities with Highest Average Prices in the Top 5 States',
-    labels={'Valor de Venda': 'Average Price'}
+        path=[px.Constant('Estados'), 'Estado - Sigla', 'Municipio'], 
+        values='Valor de Venda',
+        custom_data=['Valor de Venda', 'Municipio'],
+        title='Top 5 States with Highest Average Gasoline Prices',
+        labels={'Valor de Venda': 'Average Price'}
     ),
 
     px.treemap(df_eta,
-    path=[px.Constant('Estados'), 'Estado - Sigla', 'Municipio'], 
-    values='Valor de Venda', 
-    custom_data='Valor de Venda',
-    title='Top 5 Cities with Highest Average Prices in the Top 5 States',
-    labels={'Valor de Venda': 'Average Price'}
+        path=[px.Constant('Estados'), 'Estado - Sigla', 'Municipio'], 
+        values='Valor de Venda', 
+        custom_data='Valor de Venda',
+        title='Top 5 States with Highest Average Ethanol Prices',
+        labels={'Valor de Venda': 'Average Price'}
     )
 ]
 
@@ -250,16 +253,21 @@ for i, figure in enumerate(figs):
     for trace in range(len(figure["data"])):
         fig.append_trace(figure['data'][trace], row=1, col=i+1)
 
-fig.update_traces(marker=dict(colors='Valor de Venda',
-                                colorscale='amp',
-                                showscale=False,
-                                cmid=[df_eta['Valor de Venda'].mean().tolist()]))
 fig.update_traces(root_color='lightgrey')
+fig.update_traces(maxdepth=2)
 fig.update_traces(textinfo='label+value',
-                    texttemplate='%{label}: %{value:,.2f}')
-fig.update_traces(hovertemplate='Valor de Venda: %{customdata[0]:,.2f}')
+                texttemplate=
+                '<b>%{label}</b>\
+                <br><b><span style="font-size:16px">%{value:,.2f}</span></b>',
+                hovertemplate='Valor de Venda: <b>%{customdata[0]:,.2f}</b>')
 
-fig.show()
+fig.update_layout(margin=dict(t=50, l=25, r=25, b=25))
+
+# Atualizações para o título
+fig.update_layout(title_text='<b>Top 5 States with the Highest Average Gasoline and Ethanol Prices</b>', 
+                title_x=0.5)  # centralizar o título
+
+fig.write_html('figure.html', auto_open=True)
 
 # # 4. Qual o preço médio da gasolina e do etanol por estado?
 
