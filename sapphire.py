@@ -1,11 +1,10 @@
 # Import necessary libraries
 import pandas as pd 
-import matplotlib.pyplot as plt
-import seaborn as sns
 from dtype_diet import report_on_dataframe, optimize_dtypes
 from plotly.subplots import make_subplots
 import plotly.express as px
-
+import plotly.graph_objects as go
+import geopandas as gpd
 # Read data for November
 df_nov = pd.read_csv('./data/precos-gasolina-etanol-11.csv', delimiter=';')
 
@@ -51,167 +50,338 @@ def operation_df(df, column1, operation, product=None, column2=None):
 # List of products for which aggregation will be performed
 product = ['GASOLINA', 'GASOLINA ADITIVADA', 'ETANOL']
 
-# # 1. Como se comportaram o preço dos combustíveis durante os dois meses citados? Os valores do 
-# # etanol e da gasolina tiveram uma tendência de queda ou diminuição?
+# 1. Como se comportaram o preço dos combustíveis durante os dois meses citados? Os valores do 
+# etanol e da gasolina tiveram uma tendência de queda ou diminuição?
 
-# # Group by product and day of collection, calculating the mean price for November
-# df_nov1 = df_nov.groupby(['Produto','Dia da Coleta'])['Valor de Venda'].mean().reset_index()
+# Agrupar por produto e dia da coleta, calculando o preço médio para novembro
+df_nov1 = df_nov.groupby(['Produto','Dia da Coleta'])['Valor de Venda'].mean().reset_index()
 
-# # Group by product and day of collection, calculating the mean price for December
-# df_dez1 = df_dez.groupby(['Produto', 'Dia da Coleta'])['Valor de Venda'].mean().reset_index()
+# Agrupar por produto e dia da coleta, calculando o preço médio para dezembro
+df_dez1 = df_dez.groupby(['Produto', 'Dia da Coleta'])['Valor de Venda'].mean().reset_index()
 
-# # Merge the November and December dataframes on the day of collection
-# data = pd.merge(df_dez1, df_nov1, on='Produto', how='inner')
+data_gas_nov = df_nov1[df_nov1['Produto']==product[0]]
+data_gas_dez = df_dez1[df_dez1['Produto']==product[0]]
 
-# # Concatenate two dataframes df_nov1 and df_dez1 into data_mimmax
-# data_mimmax = pd.concat([df_nov1, df_dez1])
+data_etn_nov = df_nov1[df_nov1['Produto']==product[2]]
+data_etn_dez = df_dez1[df_dez1['Produto']==product[2]]
 
-# # Convert the 'Valor de Venda' column to float type
-# data_mimmax['Valor de Venda'].astype('float')
+# Concatenar dois dataframes df_nov1 e df_dez1 em data_mimmax
+data_mimmax = pd.concat([df_nov1, df_dez1])
 
-# # Filter data for each product type (stored in the 'product' list)
-# data_mimmax_gasc = data_mimmax[data_mimmax['Produto']==product[0]]
-# data_mimmax_gasa = data_mimmax[data_mimmax['Produto']==product[1]]
-# data_mimmax_etn = data_mimmax[data_mimmax['Produto']==product[2]]
+# Converter a coluna 'Valor de Venda' para o tipo float
+data_mimmax['Valor de Venda'].astype('float')
 
-# # Calculate the mean prices for each day of collection in November
-# data_all_nov = df_nov.groupby(['Dia da Coleta'])['Valor de Venda'].mean().reset_index()
+# Filtrar dados para cada tipo de produto (armazenado na lista 'product')
+data_mimmax_gas = data_mimmax[data_mimmax['Produto']==product[0]]
+max_gas_line = data_mimmax_gas['Valor de Venda'].max()
+max_gas_line = [max_gas_line] * len(data_gas_nov['Dia da Coleta'])
+max_gas_marker = data_mimmax_gas.nlargest(1, 'Valor de Venda')
 
-# # Calculate the mean prices for each day of collection in December
-# data_all_dez = df_dez.groupby(['Dia da Coleta'])['Valor de Venda'].mean().reset_index()
+min_gas_line = data_mimmax_gas['Valor de Venda'].min()
+min_gas_line = [min_gas_line] * len(data_gas_nov['Dia da Coleta'])
+min_gas_marker = data_mimmax_gas.nsmallest(1, 'Valor de Venda')
 
-# # Merge the mean prices for November and December on the day of collection
-# data_all = pd.merge(data_all_nov, data_all_dez, on='Dia da Coleta', how='inner')
 
-# # Concatenate mean prices for November and December into data_all_minmax
-# data_all_minmax = pd.concat([data_all_dez, data_all_nov])
+data_mimmax_etn = data_mimmax[data_mimmax['Produto']==product[2]]
+max_etn_line = data_mimmax_etn['Valor de Venda'].max()
+max_etn_line = [max_etn_line] * len(data_etn_nov['Dia da Coleta'])
+max_etn_marker = data_mimmax_etn.nlargest(1, 'Valor de Venda')
 
-# # Convert the 'Valor de Venda' column to float type for data_all_minmax
-# data_all_minmax['Valor de Venda'].astype('float')
+min_etn_line = data_mimmax_etn['Valor de Venda'].min()
+min_etn_line = [min_etn_line] * len(data_etn_nov['Dia da Coleta'])
+min_etn_marker = data_mimmax_etn.nsmallest(1, 'Valor de Venda')
 
-# # Create a 2x2 subplot grid
-# fig, axes = plt.subplots(2,2, figsize=(10,6))
+# Calcular os preços médios para cada dia de coleta em novembro
+data_all_nov = df_nov.groupby(['Dia da Coleta'])['Valor de Venda'].mean().reset_index()
 
-# # Plot line chart for overall mean prices of all fuels in November and December
-# sns.lineplot(x=data_all['Dia da Coleta'], y=data_all_minmax['Valor de Venda'].min(), color='red', linestyle='dashdot', ax=axes[0,0])
-# sns.lineplot(x=data_all['Dia da Coleta'], y=data_all_minmax['Valor de Venda'].max(), color='lightgreen', linestyle='dashdot', ax=axes[0,0])
-# sns.lineplot(x='Dia da Coleta', y='Valor de Venda_x', data=data_all, label='November', color='blue', ax=axes[0,0])
-# sns.lineplot(x='Dia da Coleta', y='Valor de Venda_y', data=data_all, label='December', color='orange', ax=axes[0,0])
-# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_all_minmax.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[0,0])
-# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_all_minmax.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[0,0])
-# axes[0,0].set_title('All Fuels')
-# axes[0,0].set_xlabel('Days')
-# axes[0,0].set_ylabel('Average Price')
-# axes[0,0].legend(loc='lower left')
+# Calcular os preços médios para cada dia de coleta em dezembro
+data_all_dez = df_dez.groupby(['Dia da Coleta'])['Valor de Venda'].mean().reset_index()
 
-# # Plot line chart for Gasolina Comum (Regular Gasoline) prices in November and December
-# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasc['Valor de Venda'].max(), data=data[data['Produto'] == product[0]], color='lightgreen', linestyle='dashdot', ax=axes[0,1])
-# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasc['Valor de Venda'].min(), data=data[data['Produto'] == product[0]], color='red', linestyle='dashdot', ax=axes[0,1])
-# sns.lineplot(x='Dia da Coleta_y', y='Valor de Venda_y', data=data[data['Produto'] == product[0]], label='November', color='blue', ax=axes[0,1])
-# sns.lineplot(x='Dia da Coleta_x', y='Valor de Venda_x', data=data[data['Produto'] == product[0]], label='December', color='orange', ax=axes[0,1])
-# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_gasc.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[0,1])
-# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_gasc.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[0,1])
-# axes[0,1].set_title('Regular Gasoline')
-# axes[0,1].set_xlabel('Days')
-# axes[0,1].set_ylabel('Average Price')
-# axes[0,1].legend(loc='upper left')
+# Mesclar os preços médios de novembro e dezembro no dia da coleta
+data_all = pd.merge(data_all_nov, data_all_dez, on='Dia da Coleta', how='inner')
 
-# # Plot line chart for Gasolina Aditivada (Premium Gasoline) prices in November and December
-# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasa['Valor de Venda'].min(), data=data[data['Produto'] == product[1]], color='red', linestyle='dashdot', ax=axes[1,0])
-# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_gasa['Valor de Venda'].max(), data=data[data['Produto'] == product[1]], color='lightgreen', linestyle='dashdot', ax=axes[1,0])
-# sns.lineplot(x='Dia da Coleta_y', y='Valor de Venda_y', data=data[data['Produto'] == product[1]], label='November', color='blue', ax=axes[1,0])
-# sns.lineplot(x='Dia da Coleta_x', y='Valor de Venda_x', data=data[data['Produto'] == product[1]], label='December', color='orange', ax=axes[1,0])
-# sns.lineplot(x='Dia da Coleta', y= 'Valor de Venda', data=data_mimmax_gasa.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[1,0])
-# sns.lineplot(x='Dia da Coleta', y= 'Valor de Venda', data=data_mimmax_gasa.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[1,0])
-# axes[1,0].set_title('Premium Gasoline')
-# axes[1,0].set_xlabel('Days')
-# axes[1,0].set_ylabel('Average Price')
-# axes[1,0].legend(loc='lower left')
+# Concatenar os preços médios de novembro e dezembro em data_all_minmax
+data_all_minmax = pd.concat([data_all_dez, data_all_nov])
 
-# # Plot line chart for Etanol (Ethanol) prices in November and December
-# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_etn['Valor de Venda'].max(), data=data[data['Produto'] == product[0]], color='lightgreen', linestyle='dashdot', ax=axes[1,1])
-# sns.lineplot(x='Dia da Coleta_x', y=data_mimmax_etn['Valor de Venda'].min(), data=data[data['Produto'] == product[0]], color='red', linestyle='dashdot', ax=axes[1,1])
-# sns.lineplot(x='Dia da Coleta_y', y='Valor de Venda_y', data=data[data['Produto'] == product[2]], label='November', color='blue', ax=axes[1,1])
-# sns.lineplot(x='Dia da Coleta_x', y='Valor de Venda_x', data=data[data['Produto'] == product[2]], label='December', color='orange', ax=axes[1,1])
-# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_etn.nsmallest(1, 'Valor de Venda'), color='red', marker='v', markersize=8, ax=axes[1,1])
-# sns.lineplot(x='Dia da Coleta', y='Valor de Venda', data=data_mimmax_etn.nlargest(1, 'Valor de Venda'), color='green', marker='^', markersize=8, ax=axes[1,1])
-# axes[1,1].set_title('Ethanol')
-# axes[1,1].set_xlabel('Days')
-# axes[1,1].set_ylabel('Average Price')
-# axes[1,1].legend()
+# Converter a coluna 'Valor de Venda' para o tipo float para data_all_minmax
+all_max_y = data_all_minmax['Valor de Venda'].max()
+all_max_y = [all_max_y] * len(data_all['Dia da Coleta'])
+all_min_y = data_all_minmax['Valor de Venda'].min()
+all_min_y = [all_min_y] * len(data_all['Dia da Coleta'])
 
-# # Set the overall title for the entire plot
-# fig.suptitle('Average Price Comparison Between November and December')
-# plt.tight_layout()
-# plt.show()
+all_max_marker = data_all_minmax.nlargest(1, 'Valor de Venda')
+all_min_marker = data_all_minmax.nsmallest(1, 'Valor de Venda')
 
-# # 2. Qual o preço médio da gasolina e do etanol nesses dois meses?
+all_fuels =[
+    go.Scatter(
+        x=data_all['Dia da Coleta'], y=data_all['Valor de Venda_x'], 
+        mode='lines', name='Novembro', 
+        line=dict(color='#0057e7', width=6),
+        connectgaps=True,
+        legend='legend1',
+        legendgroup='group1'
+    ),
 
-# # Create a DataFrame for November mean values and counts for each product
-# data_nov = pd.DataFrame({"Product": product, "Mean_Value": '', "Month": "November"})
+    go.Scatter(
+        x=data_all['Dia da Coleta'], y=data_all['Valor de Venda_y'], 
+        mode='lines', name='Dezembro', 
+        line=dict(color='#ffa700', width=6),
+        connectgaps=True,
+        legend='legend1',
+        legendgroup='group1'
+    ),
 
-# # Calculate mean values for each product in November
-# data_nov['Mean_Value'] = [operation_df(df_nov, 'Produto', 'mean', p, 'Valor de Venda') for p in product]
+    go.Scatter(
+        x=data_all['Dia da Coleta'], y=all_max_y,
+        mode='lines',
+        line=dict(color='#008744', width=4, dash='dashdot'),
+        showlegend=False,
+        legendgroup='group1'
+    ),
 
-# # Calculate overall mean value for all fuels in November
-# data_nov['Mean_All_Fuels'] = operation_df(df_nov, 'Valor de Venda', 'mean')
+    go.Scatter(
+        x=data_all['Dia da Coleta'], y=all_min_y,
+        mode='lines',
+        line=dict(color='#d62d20', width=4, dash='dashdot'),
+        showlegend=False,
+        legendgroup='group1'
+    ),
 
-# # Create a DataFrame for December mean values and counts for each product
-# data_dez = pd.DataFrame({"Product": product, "Mean_Value": '', "Month": "December"})
+    go.Scatter(
+        mode='markers',
+        x=all_max_marker['Dia da Coleta'], y=all_max_marker['Valor de Venda'],
+        marker=dict(symbol='circle', size=12, color='#008744'),
+        showlegend=False,
+        legend='legend1',
+        legendgroup='group1'
+    ),
 
-# # Calculate mean values for each product in December
-# data_dez['Mean_Value'] = [operation_df(df_dez, 'Produto', 'mean', p, 'Valor de Venda') for p in product]
+    go.Scatter(
+        mode='markers',
+        x=all_min_marker['Dia da Coleta'], y=all_min_marker['Valor de Venda'],
+        marker=dict(symbol='circle', size=12, color='#d62d20'),
+        showlegend=False,
+        legend='legend1',
+        legendgroup='group1'
+    )
+]
 
-# # Calculate counts for each product in November and December
-# data_nov['Qtd'] = [operation_df(df_nov, 'Produto', 'count', p, 'Valor de Venda') for p in product]
-# data_dez['Qtd'] = [operation_df(df_dez, 'Produto', 'count', p, 'Valor de Venda') for p in product]
+gas =[   
+    go.Scatter(
+        x=data_gas_nov['Dia da Coleta'], y=data_gas_nov['Valor de Venda'],
+        mode='lines', name= 'Novembro',
+        line=dict(color='#0057e7', width=6),
+        legend='legend2',
+        legendgroup='group2'
+    ),
 
-# # Concatenate November and December data
-# data = pd.concat([data_dez, data_nov])
+    go.Scatter(
+        x=data_gas_dez['Dia da Coleta'], y=data_gas_dez['Valor de Venda'],
+        mode='lines', name='Dezembro',
+        line=dict(color='#ffa700', width=6),
+        legend='legend2',
+        legendgroup='group2' 
+    ),
 
-# # Merge November and December data for further analysis
-# data_merged = pd.merge(data_nov.drop(columns=['Month']), data_dez.drop(columns=['Month']), on='Product', how='inner')
+    go.Scatter(
+        x=data_gas_nov['Dia da Coleta'], y=max_gas_line,
+        mode='lines', 
+        line=dict(color='#008744', width=6, dash='dashdot'),
+        legend='legend2',
+        showlegend=False,
+        legendgroup='group2'
+    ),
 
-# # Create a subplot with two plots side by side
-# fig, axes = plt.subplots(1,2, figsize=(10, 6))
+    go.Scatter(
+        x=data_gas_nov['Dia da Coleta'], y=min_gas_line,
+        mode='lines', 
+        line=dict(color='#d62d20', width=6, dash='dashdot'),
+        showlegend=False,
+        legend='legend2',
+        legendgroup='group2'
+    ),
 
-# custom_palette = {'November':'blue', 'December':'orange'}
+    go.Scatter(
+        x=max_gas_marker['Dia da Coleta'], y=max_gas_marker['Valor de Venda'],
+        mode='markers',
+        marker=dict(symbol='circle', size=12, color='#008744'),
+        showlegend=False,
+        legend='legend2',
+        legendgroup='group2'
+    ),
 
-# # Plot a bar chart showing mean values for each product in November and December
-# ax = sns.barplot(x='Product', y='Mean_Value', hue="Month", data=data, palette={'November':'blue', 'December':'orange'}, ax=axes[0])
-# for p in ax.patches:
-#     ax.annotate(format(p.get_height(), '.2f'), 
-#                 (p.get_x() + p.get_width() / 2., p.get_height()), 
-#                 ha='center', va='center', 
-#                 xytext=(0, 10), 
-#                 textcoords='offset points')
-# sns.barplot(x='Product', y='Mean_Value', hue="Month", data=data, palette=[custom_palette[color] for color in custom_palette], ax=axes[0])
-# axes[0].set_title("Mean of Products Between November and December")
-# axes[0].set_ylabel("Mean_Value")
-# axes[0].set_xlabel("Products")
-# axes[0].legend()
+    go.Scatter(
+        x=min_gas_marker['Dia da Coleta'], y=min_gas_marker['Valor de Venda'],
+        mode='markers',
+        marker=dict(symbol='circle', size=12, color='#d62d20'),
+        showlegend=False,
+        legend='legend2',
+        legendgroup='group2'
+    )
+]
 
-# # Plot a pie chart showing the distribution of fuel types based on counts in November and December
-# custom_palette = {'GASOLINA': 'blue', 'GASOLINA ADITIVADA':'orange', 'ETANOL':'green'}
-# axes[1].pie(data_merged[['Qtd_x', 'Qtd_y']].sum(axis=1), colors=[custom_palette[c] for c in data_merged['Product']], autopct="%.0f%%")
-# axes[1].pie(data_merged[['Qtd_x', 'Qtd_y']].sum(axis=1), colors=['purple', 'lightblue', 'lightgreen'], autopct="%.0f%%")
-# axes[1].set_title('Distribution of fuel types')
-# axes[1].legend(labels=data_merged['Product'], loc='lower center')
+etn = [
+    go.Scatter(
+        x=data_etn_nov['Dia da Coleta'], y=data_etn_nov['Valor de Venda'],
+        mode='lines', name= 'Novembro',
+        line=dict(color='#0057e7', width=6),
+        legend='legend3',
+        legendgroup='group3'
+    ),
 
-# # Adjust layout for better visualization
-# plt.tight_layout()
-# plt.show()
+    go.Scatter(
+        x=data_etn_dez['Dia da Coleta'], y=data_etn_dez['Valor de Venda'],
+        mode='lines', name='Dezembro',
+        line=dict(color='#ffa700', width=6),
+        legend='legend3',
+        legendgroup='group3'
+    ),
+
+    go.Scatter(
+        x=data_etn_nov['Dia da Coleta'], y=max_etn_line,
+        mode='lines', 
+        line=dict(color='#008744', width=6, dash='dashdot'),
+        legend='legend3',
+        legendgroup='group3',
+        showlegend=False
+    ),
+
+    go.Scatter(
+        x=data_etn_nov['Dia da Coleta'], y=min_etn_line,
+        mode='lines', 
+        line=dict(color='#d62d20', width=6, dash='dashdot'),
+        showlegend=False,
+        legend='legend3',
+        legendgroup='group3'
+    ),
+
+    go.Scatter(
+        x=max_etn_marker['Dia da Coleta'], y=max_etn_marker['Valor de Venda'],
+        mode='markers',
+        marker=dict(symbol='circle', size=12, color='#008744'),
+        showlegend=False,
+        legend='legend3',
+        legendgroup='group3'
+    ),
+
+    go.Scatter(
+        x=min_etn_marker['Dia da Coleta'], y=min_etn_marker['Valor de Venda'],
+        mode='markers',
+        marker=dict(symbol='circle', size=12, color='#d62d20'),
+        showlegend=False,
+        legend='legend3',
+        legendgroup='group3'
+    )
+]
+
+fig = go.Figure()
+
+for trace in gas:
+    fig.add_trace(trace)
+
+for trace in all_fuels:
+    fig.add_trace(trace)
+
+for trace in etn:
+    fig.add_trace(trace)
+
+fig.update_layout(
+    legend1=dict(title='Todos os Combustíveis', xref='container', yref='container', x=1, y=0.65),
+    legend2=dict(title='Gasolina', xref='container', yref='container',x=0.958, y=0.55),
+    legend3=dict(title='Etanol', xref='container', yref='container', x=0.958, y=0.45)
+)
+
+fig.write_html('html/figure1.html', auto_open=True)
+
+# 2. Qual o preço médio da gasolina e do etanol nesses dois meses?
+
+# Criar um DataFrame para os valores médios e contagens de cada produto em novembro
+data_nov = pd.DataFrame({"Produto": product, "Valor Médio": '', "Mês": "Novembro"})
+
+# Calcular os valores médios para cada produto em novembro
+data_nov['Valor Médio'] = [operation_df(df_nov, 'Produto', 'mean', p, 'Valor de Venda') for p in product]
+
+# Calcular o valor médio global para todos os combustíveis em novembro
+data_nov['Valor Médio de Todos'] = operation_df(df_nov, 'Valor de Venda', 'mean')
+
+# Criar um DataFrame para os valores médios e contagens de cada produto em dezembro
+data_dez = pd.DataFrame({"Produto": product, "Valor Médio": '', "Mês": "Dezembro"})
+
+# Calcular os valores médios para cada produto em dezembro
+data_dez['Valor Médio'] = [operation_df(df_dez, 'Produto', 'mean', p, 'Valor de Venda') for p in product]
+
+# Calcular as contagens para cada produto em novembro e dezembro
+data_nov['Quantidade'] = [operation_df(df_nov, 'Produto', 'count', p, 'Valor de Venda') for p in product]
+data_dez['Quantidade'] = [operation_df(df_dez, 'Produto', 'count', p, 'Valor de Venda') for p in product]
+
+# Mesclar os dados de novembro e dezembro para análises adicionais
+data_merged = pd.merge(data_nov.drop(columns=['Mês']), data_dez.drop(columns=['Mês']), on='Produto', how='inner')
+data_merged = data_merged.drop(data_merged[data_merged['Produto']==product[1]].index)
+
+data_nov = data_nov.drop(data_nov[data_nov['Produto']==product[1]].index)
+data_dez = data_dez.drop(data_dez[data_dez['Produto']==product[1]].index)
+
+fig = make_subplots(
+    cols=2, rows=1,
+    subplot_titles=['Média de Preços de Novembro até Dezembro', 'Distribuição de Combustíveis nos Dois Meses'],
+    specs=[[{'type': 'Bar'}, {'type': 'Pie'}]]
+)
+
+# Gráfico de Barras
+bar_trace_nov = go.Bar(
+    x=data_nov['Produto'], y=data_nov['Valor Médio'],
+    name='Novembro', marker_color='#0057e7',
+    text=data_nov['Valor Médio'],
+    legendgroup='group1',
+    legendgrouptitle=dict(text='Preço Médio'),
+    legend='legend1'
+)
+
+bar_trace_dez = go.Bar(
+    x=data_dez['Produto'], y=data_dez['Valor Médio'],
+    name='Dezembro', marker_color='#ffa700',
+    text=data_dez['Valor Médio'],
+    legendgroup='group1'
+)
+
+fig.add_trace(bar_trace_nov, col=1, row=1)
+fig.add_trace(bar_trace_dez, col=1, row=1)
+
+fig.data[0].update(texttemplate='%{text:.3s}', textposition='outside')
+fig.data[1].update(texttemplate='%{text:.3s}', textposition='outside')
+fig.update_layout(barmode='group')
+
+# Gráfico de Pizza
+pie_trace = go.Pie(
+    labels=data_merged['Produto'],
+    values=data_merged[['Quantidade_x', 'Quantidade_y']].sum(axis=1),
+    legend='legend2',
+    legendgroup='group2',
+    legendgrouptitle=dict(text='Distribuição Combustíveis')
+)
+
+fig.add_trace(pie_trace, col=2, row=1)
+
+fig.data[2].update(hoverinfo='label+percent', textinfo='percent', textfont_size=20,
+                marker=dict(colors=['#5d5d5d', '#2a623d'], line=dict(color='#ffcf40', width=2)))
+
+fig.update_layout(
+    legend=dict(x=0.1, y=0.8, xref="container", yref="container", traceorder='grouped'),
+    legend2=dict(x=1, y=0.8, xref="container", yref="container", traceorder='grouped'),
+)
+
+fig.write_html('html/figure2.html', auto_open=True)
 
 # 3. Quais os 5 estados com o preço médio da gasolina e do etanol mais caros?
 
-# Concatenate dataframes for November and December
+# Concatene os dataframes de novembro e dezembro
 df = pd.concat([df_nov, df_dez], axis=0, ignore_index=True)
 df = df.drop(df[df['Produto']=='GASOLINA ADITIVADA'].index)
 
-# Ensure 'Estado - Sigla' column is treated as a string
+# Certifique-se de que a coluna 'Estado - Sigla' seja tratada como string
 df['Estado - Sigla'] = df['Estado - Sigla'].astype(str) 
 
-# Group by state and product, calculate mean price, and sort values in descending order
+# Agrupe por estado e produto, calcule o preço médio e ordene os valores em ordem decrescente
 df_gas = df[df['Produto']==product[0]]
 df_gas = df_gas.groupby(['Municipio', 'Estado - Sigla'])['Valor de Venda'].mean().reset_index()
 df_gas = df_gas.groupby('Estado - Sigla').apply(lambda x: x.nlargest(5, 'Valor de Venda')).reset_index(drop=True)
@@ -226,29 +396,31 @@ df_eta = df_eta[df_eta['Estado - Sigla'].isin(df_eta_filter['Estado - Sigla'].to
 
 df_concat = pd.concat([df_gas, df_eta], axis=0, ignore_index=True)
 
-# Criar treemap
+# Criar treemaps
 figs = [
     px.treemap(df_gas,
         path=[px.Constant('Estados'), 'Estado - Sigla', 'Municipio'], 
         values='Valor de Venda',
         custom_data=['Valor de Venda', 'Municipio'],
-        title='Top 5 States with Highest Average Gasoline Prices',
-        labels={'Valor de Venda': 'Average Price'}
+        title='Top 5 Estados com Maior Preço Médio de Gasolina',
+        labels={'Valor de Venda': 'Preço Médio'}
     ),
 
     px.treemap(df_eta,
         path=[px.Constant('Estados'), 'Estado - Sigla', 'Municipio'], 
         values='Valor de Venda', 
         custom_data='Valor de Venda',
-        title='Top 5 States with Highest Average Ethanol Prices',
-        labels={'Valor de Venda': 'Average Price'}
+        title='Top 5 Estados com Maior Preço Médio de Etanol',
+        labels={'Valor de Venda': 'Preço Médio'}
     )
 ]
 
+# Criar subplot com treemaps para gasolina e etanol
 fig = make_subplots(rows=1, cols=len(figs),
                     subplot_titles=['Gasolina', 'Etanol'],
                     specs=[[{"type":'treemap'}, {'type':'treemap'}]])
 
+# Adicionar treemaps ao subplot
 for i, figure in enumerate(figs):
     for trace in range(len(figure["data"])):
         fig.append_trace(figure['data'][trace], row=1, col=i+1)
@@ -259,91 +431,147 @@ fig.update_traces(textinfo='label+value',
                 texttemplate=
                 '<b>%{label}</b>\
                 <br><b><span style="font-size:16px">%{value:,.2f}</span></b>',
-                hovertemplate='Valor de Venda: <b>%{customdata[0]:,.2f}</b>')
+                hovertemplate='Preço Médio: <b>%{customdata[0]:,.2f}</b>')
 
 fig.update_layout(margin=dict(t=50, l=25, r=25, b=25))
 
-# Atualizações para o título
-fig.update_layout(title_text='<b>Top 5 States with the Highest Average Gasoline and Ethanol Prices</b>', 
+# Atualizar layout com título e legenda
+fig.update_layout(title_text='<b>Top 5 Estados com os Maiores Preços Médios de Gasolina e Etanol</b>', 
                 title_x=0.5)  # centralizar o título
 
-fig.write_html('figure.html', auto_open=True)
+# Salvar o arquivo HTML
+fig.write_html('html/figure3.html', auto_open=True)
 
-# # 4. Qual o preço médio da gasolina e do etanol por estado?
+# 4. Qual o preço médio da gasolina e do etanol por estado?
 
-# # Group by state and product, calculate mean price
-# df_data = df.groupby(['Estado - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+# Concatene os dataframes df_nov e df_dez ao longo do eixo 0, ignorando os índices existentes
+df = pd.concat([df_nov, df_dez], axis=0, ignore_index=True)
 
-# # Create a subplot with two scatter plots side by side
-# fig, axes = plt.subplots(1,2, figsize=(10,6))
+# Converta a coluna 'Estado - Sigla' para o tipo de dado string
+df['Estado - Sigla'] = df['Estado - Sigla'].astype(str)
 
-# # Plot a scatter plot for the average prices of Gasolina (Gasoline) in each state
-# sns.scatterplot(y='Estado - Sigla', x='Valor de Venda', data=df_data[df_data['Produto']==product[0]], ax=axes[0])
-# axes[0].set_title('Gasolina')
-# axes[0].set_xlabel('Average Price')
-# axes[0].set_ylabel('States')
+# Agrupe os dados e calcule a média do 'Valor de Venda' para cada combinação de 'Regiao - Sigla', 'Estado - Sigla' e 'Produto'
+df_data = df.groupby(['Regiao - Sigla', 'Estado - Sigla', 'Produto'])['Valor de Venda'].mean()
 
-# # Plot a scatter plot for the average prices of Etanol (Ethanol) in each state
-# sns.scatterplot(y='Estado - Sigla', x='Valor de Venda', data=df_data[df_data['Produto']==product[2]], color='orange', ax=axes[1])
-# axes[1].set_title('Etanol')
-# axes[1].set_xlabel('Average Price')
-# axes[1].set_ylabel('')  # Clearing the default y-axis label
-# axes[1].set_yticks([])  # Removing y-axis ticks
+# Remova valores nulos e redefina o índice do dataframe resultante
+data = df_data.dropna().reset_index()
 
-# # Set the overall title for the entire plot
-# plt.suptitle('Average Price per State')
-# plt.tight_layout()
-# plt.show()
+# Defina as cores a serem usadas nos gráficos e as regiões correspondentes
+cores = ['#d11141', '#00b159', '#00aedb', '#f37735', '#ffc425']
+regioes = ['N', 'S', 'SE', 'NE', 'CO']
 
-# # 5. Qual o município que possui o menor preço para a gasolina e para o etanol?
+# Crie dicionários para armazenar os gráficos de gasolina e etanol
+figure_gasolina = {}
+figure_etanol = {}
 
-# # Print the information for the municipality with the lowest Gasolina (Gasoline) price in November
-# print('Gasolina November\n', df_nov[df_nov['Produto']==product[0]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+# Inicialize os dataframes específicos para gasolina e etanol
+gasolina = data[data['Produto'] == 'GASOLINA']
+etanol = data[data['Produto'] == 'ETANOL']
 
-# # Print the information for the municipality with the lowest Gasolina (Gasoline) price in December
-# print('Gasolina December\n', df_dez[df_dez['Produto']==product[0]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+# Loop para criar os gráficos para cada região e produto
+for idx_regiao, regiao in enumerate(regioes):
+    regiao_data_gas = gasolina[gasolina['Regiao - Sigla'] == regiao]
+    regiao_data_etn = etanol[etanol['Regiao - Sigla'] == regiao]
+    
+    # Crie um gráfico de dispersão para cada estado na região para gasolina
+    trace_gas = go.Scatter(
+        x=regiao_data_gas['Estado - Sigla'],
+        y=regiao_data_gas['Valor de Venda'],
+        mode='markers',
+        marker_color=cores[idx_regiao],
+        text=regiao_data_gas['Estado - Sigla'],
+        name=regiao,
+        legend=f'legend{1}'
+    )
+    
+    # Crie um gráfico de dispersão para cada estado na região para etanol
+    trace_etn = go.Scatter(
+        x=regiao_data_etn['Estado - Sigla'],
+        y=regiao_data_etn['Valor de Venda'],
+        mode='markers',
+        marker_color=cores[idx_regiao],
+        text=regiao_data_etn['Estado - Sigla'],
+        name=regiao,
+        legend=f'legend{2}'
+    )
+    
+    # Adicione os traces aos dicionários correspondentes, garantindo que não seja None
+    chave_figura_gas = f'fig_gasolina_{regiao.lower()}'
+    chave_figura_etn = f'fig_etanol_{regiao.lower()}'
+    
+    figure_gasolina[chave_figura_gas] = trace_gas
+    figure_etanol[chave_figura_etn] = trace_etn
 
-# # Print the information for the municipality with the lowest Etanol (Ethanol) price in November
-# print('Etanol November\n', df_nov[df_nov['Produto']==product[2]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+# Crie um layout para as legendas
+layout = {'legend1': dict(y=0.81, x=0.1, xref='container', yref='container', title='Gasolina'),
+        'legend2': dict(y=0.808, x=0.9, xref='container', yref='container', title='Etanol')}
 
-# # Print the information for the municipality with the lowest Etanol (Ethanol) price in December
-# print('Etanol December\n', df_dez[df_dez['Produto']==product[2]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0])
+# Crie as figuras com subgráficos para gasolina e etanol
+fig = make_subplots(
+    cols=2, rows=1,
+    subplot_titles=['Preço Médio da Gasolina por Estado', 'Preço Médio do Etanol por Estado'],
+    specs=[[{"type": 'Scatter'}, {'type': 'Scatter'}]]
+)
 
-# # 6. Qual o município que possui o maior preço para a gasolina e para o etanol?
+# Adicione os gráficos de gasolina e etanol aos subgráficos
+fig.add_traces(list(figure_gasolina.values()), cols=1, rows=1)
+fig.add_traces(list(figure_etanol.values()), cols=2, rows=1)
 
-# # Print the information for the municipality with the highest Gasolina (Gasoline) price in November
-# print('Gasolina November\n', df_nov[df_nov['Produto']==product[0]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+# Atualize o layout com as legendas
+fig.update_layout(layout)
 
-# # Print the information for the municipality with the highest Gasolina (Gasoline) price in December
-# print('Gasolina December\n', df_dez[df_dez['Produto']==product[0]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+# Salve o arquivo HTML com um nome descritivo
+fig.write_html('figure4.html', auto_open=True)
 
-# # Print the information for the municipality with the highest Etanol (Ethanol) price in November
-# print('Etanol November\n', df_nov[df_nov['Produto']==product[2]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+# 5. Qual o município que possui o menor preço para a gasolina e para o etanol?
 
-# # Print the information for the municipality with the highest Etanol (Ethanol) price in December
-# print('Etanol December\n', df_dez[df_dez['Produto']==product[2]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0])
+# Print the information for the municipality with the lowest Gasolina (Gasoline) price in November
+print('Gasolina November\n', df_nov[df_nov['Produto']==product[0]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
 
-# # 7. Qual a região que possui o maior valor médio da gasolina?
+# Print the information for the municipality with the lowest Gasolina (Gasoline) price in December
+print('Gasolina December\n', df_dez[df_dez['Produto']==product[0]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
 
-# # Group by region and product, calculate mean price for Gasolina (Gasoline) in November
-# data_regiao = df_nov.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-# print('Gasolina November\n', data_regiao[data_regiao['Produto']==product[0]].nlargest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0], '\n')
+# Print the information for the municipality with the lowest Etanol (Ethanol) price in November
+print('Etanol November\n', df_nov[df_nov['Produto']==product[2]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
 
-# # Group by region and product, calculate mean price for Gasolina (Gasoline) in December
-# data_regiao = df_dez.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-# print('Gasolina December\n', data_regiao[data_regiao['Produto']==product[0]].nlargest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0])
+# Print the information for the municipality with the lowest Etanol (Ethanol) price in December
+print('Etanol December\n', df_dez[df_dez['Produto']==product[2]].nsmallest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0])
 
-# # 8. Qual a região que possui o menor valor médio do etanol?
+# 6. Qual o município que possui o maior preço para a gasolina e para o etanol?
 
-# # Group by region and product, calculate mean price for Etanol (Ethanol) in November
-# data_regiao = df_nov.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-# print('Etanol November\n', data_regiao[data_regiao['Produto']==product[2]].nsmallest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0], '\n')
+# Print the information for the municipality with the highest Gasolina (Gasoline) price in November
+print('Gasolina November\n', df_nov[df_nov['Produto']==product[0]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
 
-# # Group by region and product, calculate mean price for Etanol (Ethanol) in December
-# data_regiao = df_dez.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
-# print('Etanol December\n', data_regiao[data_regiao['Produto']==product[2]].nsmallest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0])
+# Print the information for the municipality with the highest Gasolina (Gasoline) price in December
+print('Gasolina December\n', df_dez[df_dez['Produto']==product[0]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
 
-# # # 9. Há alguma correlação entre o valor do combustível (gasolina e etanol) e a região onde ele é vendido?
+# Print the information for the municipality with the highest Etanol (Ethanol) price in November
+print('Etanol November\n', df_nov[df_nov['Produto']==product[2]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0], '\n')
+
+# Print the information for the municipality with the highest Etanol (Ethanol) price in December
+print('Etanol December\n', df_dez[df_dez['Produto']==product[2]].nlargest(1, 'Valor de Venda')[['Estado - Sigla', 'Municipio', 'Valor de Venda']].iloc[0])
+
+# 7. Qual a região que possui o maior valor médio da gasolina?
+
+# Group by region and product, calculate mean price for Gasolina (Gasoline) in November
+data_regiao = df_nov.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+print('Gasolina November\n', data_regiao[data_regiao['Produto']==product[0]].nlargest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0], '\n')
+
+# Group by region and product, calculate mean price for Gasolina (Gasoline) in December
+data_regiao = df_dez.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+print('Gasolina December\n', data_regiao[data_regiao['Produto']==product[0]].nlargest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0])
+
+# 8. Qual a região que possui o menor valor médio do etanol?
+
+# Group by region and product, calculate mean price for Etanol (Ethanol) in November
+data_regiao = df_nov.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+print('Etanol November\n', data_regiao[data_regiao['Produto']==product[2]].nsmallest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0], '\n')
+
+# Group by region and product, calculate mean price for Etanol (Ethanol) in December
+data_regiao = df_dez.groupby(['Regiao - Sigla', 'Produto'])['Valor de Venda'].mean().reset_index()
+print('Etanol December\n', data_regiao[data_regiao['Produto']==product[2]].nsmallest(1,'Valor de Venda')[['Regiao - Sigla', 'Valor de Venda']].iloc[0])
+
+# # 9. Há alguma correlação entre o valor do combustível (gasolina e etanol) e a região onde ele é vendido?
 
 
-# # # 10. Há alguma correlação entre o valor do combustível (gasolina e etanol) e a bandeira que vende ele?
+# # 10. Há alguma correlação entre o valor do combustível (gasolina e etanol) e a bandeira que vende ele?
